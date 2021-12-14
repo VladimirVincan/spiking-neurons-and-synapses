@@ -1,0 +1,40 @@
+component memristor_hh_k_v2 < foundation.electrical.branch
+% Hodzkin-Hakslijev kalijumov memristor
+% Vladimir Vincan
+% FTN UNS
+% 2021
+ 
+parameters
+    g = {36, 'mS'}; % g_Ca [mS/cm^2]
+    E = {-12, 'mV'};
+end
+ 
+parameters(Access=private)
+   one2s = {1, '1/s'};
+   Vrest = {0, 'mV'};
+end
+
+variables (Access=private)
+    N = {0, '1'};
+    power_dissipated = {0, 'W'};
+end
+ 
+function setup
+    N = {value = {0.3177,'1'}, priority = simscape.priority.high};
+end
+ 
+ 
+equations
+    let
+        V = v+E;
+        W = g*N^4;
+        a_n = (0.1-0.01*(V-Vrest)*{1,'1/mV'})/(exp(1-0.1*(V-Vrest)*{1,'1/mV'})-1) *one2s;
+        b_n = 0.125*exp((Vrest-V)*{1,'1/mV'}/80) *one2s;
+    in
+        i == v*W;
+        N.der == a_n*(1-N)-b_n*N;
+    end
+    power_dissipated == i*v;
+end
+ 
+end

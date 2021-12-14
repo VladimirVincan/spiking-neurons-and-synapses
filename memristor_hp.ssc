@@ -1,0 +1,51 @@
+component memristor_hp < foundation.electrical.branch
+% HP model memristora
+% Vladimir Vincan
+% FTN UNS
+% 2021
+ 
+parameters
+    R_off = {16000, 'Ohm'};
+    R_on = {100, 'Ohm'};
+    D = {10e-9, 'm'};
+    u_v = {10e-10, '(cm)^2*s^-1*V^-1'};
+    w0 = {0, 'm'};
+end
+ 
+variables(Access=private)
+    w = {0, 'm'};
+    power_dissipated = {0, 'W'};
+end
+ 
+function setup
+    w = {value = w0, priority = simscape.priority.high};
+end
+ 
+ 
+equations
+    assert(R_off>0)
+    assert(R_on>0)
+    let
+        R = R_on*w/D + R_off*(1-w/D);
+        dw = u_v*R_on*i/D;
+        dw_0 = {0, 'm/s'};
+    in
+        v == i*R;
+        if (v > 0)
+            if (w < D)
+                w.der == dw;
+            else
+                w.der == dw_0;
+            end
+        else % (v < 0)
+            if (w > 0)
+                w.der == dw;
+            else
+                w.der == dw_0;
+            end
+        end
+    end
+    power_dissipated == i*v;
+end
+ 
+end

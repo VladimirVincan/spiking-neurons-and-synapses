@@ -1,0 +1,73 @@
+component memristor_vteam_v2_linear < foundation.electrical.branch
+% VTEAM linearni model memristora
+% Vladimir Vincan
+% FTN UNS
+% 2021
+ 
+parameters
+    k_off = {1e-4, 'm/s'};
+    v_off = {1.4, 'V'};
+    a_off = {5, '1'};
+    k_on = {-30, 'm/s'};
+    v_on = {-5.7, 'V'};
+    a_on = {5, '1'};
+    
+    R_off = {5e7, 'Ohm'};
+    w_off = {10e-9, 'm'};
+    R_on = {1.5e5, 'Ohm'};
+    w_on = {0, 'm'};
+end
+ 
+parameters(Access=private)
+    w0 = {0, 'm'}; % alternativno: (w_off - w_on) / 2;
+end
+
+variables
+    dwoff_p = {0, 'm/s'};
+    dwonn_p = {0, 'm/s'};
+end
+
+variables(Access=private)
+    w = {0, 'm'};
+    power_dissipated = {0, 'W'};
+end
+ 
+function setup
+    w = {value = w0, priority = simscape.priority.high};
+end
+ 
+ 
+equations
+    assert(R_off>0)
+    assert(R_on>0)
+    assert(w_off>0)
+    
+    let
+        dw_off = k_off*(v/v_off - 1)^a_off;
+        dw_0 = {0, 'm/s'};
+        dw_on =  k_on*(v/v_on - 1)^a_on;
+        W = (R_on + (R_off-R_on)*(w-w_on)/(w_off-w_on))^(-1);
+    in
+        i == v*W;
+        if (v < v_on)
+            if (w > w_on)
+                w.der == dw_on;
+            else
+                w.der == dw_0;
+            end
+        elseif (v > v_off)
+            if (w < w_off)
+                w.der == dw_off;
+            else
+                w.der == dw_0;
+            end
+        else
+            w.der == dw_0;
+        end
+    end
+    dwoff_p == k_off*(v/v_off - 1)^a_off;
+    dwonn_p == k_on*(v/v_on - 1)^a_on;    
+    power_dissipated == i*v;
+end
+ 
+end

@@ -1,0 +1,42 @@
+component memristor_morris_lecar
+% Moris-Lekarov kalijumov memristor
+% Vladimir Vincan
+% FTN UNS
+% 2021
+
+nodes
+    p = foundation.electrical.electrical; % +:left
+    n = foundation.electrical.electrical; % -:right
+end
+
+parameters
+    g = {8, 'mS'}; % g_Ca [mS/cm^2]
+    V3 = {2, 'mV'}; % V1 [mV]
+    V4 = {30, 'mV'}; % V2 [mV]
+    lambda_N = {0.04, 'ms^-1'}; 
+    E = {-84, 'mV'};
+end
+
+variables
+    N = {0, '1'};
+    N_inf = {0.0005, '1'};
+    lambda = {0, 'ms^-1'};
+    i = { 0, 'A'}; 
+    v = { 0, 'V'}; 
+    memductance = {0, 'mS'};
+end
+
+branches
+    i : p.i -> n.i;
+end
+ 
+equations
+    v == p.v - n.v;
+    lambda == lambda_N * cosh( (v+E-V3) / (2*V4) );
+    N_inf == 0.5 * (1 + tanh( (v+E-V3)/V4 ));
+    N.der == lambda * (N_inf - N);
+    memductance == g*N;
+    i == v*memductance;
+end
+
+end

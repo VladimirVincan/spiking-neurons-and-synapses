@@ -1,0 +1,55 @@
+component memristor_zamarreno < foundation.electrical.branch
+% Zamarenov model memristora
+% Vladimir Vincan
+% FTN UNS
+% 2021
+
+parameters
+    Io = {10, 'uA'};      % I0
+    Vo = {0.1, 'V'};      % V0
+    Vth = {1, 'V'};       % Vth
+    x0 = {-9, 'V'};       % početna vrednost promenljive stanja xi
+    Kr_inv = {222, 'nA'}; % Kr_inv
+    w_max = {10, 'V'};    % w_max
+    w_min = {-10, 'V'};   % w_min
+    w_0 = {12.2, 'V'};    % w_o
+    Cmr = {10, 'mF'};     % Cmr
+end
+
+parameters(Access=private)
+    g0 = {1, 'S'};
+end
+
+variables(Access=private)
+    xi = {value = x0, priority = priority.high};
+    power_dissipated = {0, 'W'};
+    tang = {0, '1'};
+end
+
+equations
+    let
+        g_sat = g0 * tang; 
+        i_sat = g_sat * xi;
+        i_g = Io*sign(v)*(exp(abs(v)/Vo)-exp(Vth/Vo));
+        M = (xi + w_0)/Kr_inv;
+    in
+        v == i*M;
+        if abs(xi) < w_max
+            tang == 0.005*tan(1.57*xi/w_max);
+        else
+            tang == 0.005*tan(1.56);
+        end
+        if abs(v) > Vth
+            if abs(xi) < w_max
+                xi.der == (i_g - i_sat)/Cmr;
+            else
+                xi.der == -i_sat/Cmr;
+            end
+        else
+            xi.der == {0, 'V/s'};
+        end
+    end
+    power_dissipated == i*v;
+end
+
+end
